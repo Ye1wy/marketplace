@@ -3,7 +3,7 @@ package reader
 import (
 	"encoding/json"
 	"io"
-	"marketplace/backend/src/data"
+	"marketplace/src/data"
 	"os"
 )
 

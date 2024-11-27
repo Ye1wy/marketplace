@@ -1,15 +1,15 @@
-package main
+package api
 
 import (
 	"log/slog"
-	"marketplace/backend/src/reader"
+	"marketplace/src/reader"
 	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
 )
 
-func main() {
+func RunApi() {
 	router := gin.Default()
 
 	Route(router)
@@ -23,7 +23,7 @@ func Route(router *gin.Engine) {
 }
 
 func getData(c *gin.Context) {
-	file, err := os.Open("storage/Data.json")
+	file, err := os.Open("backend/storage/Data.json")
 
 	if err != nil {
 		slog.Info("File not found")
@@ -36,6 +36,10 @@ func getData(c *gin.Context) {
 	var data reader.Data
 
 	err = data.Parse(file)
+
+	if err != nil {
+		slog.Error("Error in parse file %v", err)
+	}
 
 	c.IndentedJSON(http.StatusOK, data)
 }
