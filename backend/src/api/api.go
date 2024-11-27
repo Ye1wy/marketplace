@@ -26,7 +26,7 @@ func getData(c *gin.Context) {
 	file, err := os.Open("storage/Data.json")
 
 	if err != nil {
-		slog.Info("[Info] File not found")
+		slog.Info("File not found")
 		c.Status(http.StatusNotFound)
 		return
 	}
@@ -42,8 +42,6 @@ func getData(c *gin.Context) {
 
 func HomePage() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
 		c.JSON(http.StatusOK, "Home page of Image Server")
-
 	}
 }
