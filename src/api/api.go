@@ -2,6 +2,7 @@ package api
 
 import (
 	"log/slog"
+	db_component "marketplace/src/db-component"
 	"marketplace/src/reader"
 	"net/http"
 	"os"
@@ -10,6 +11,8 @@ import (
 )
 
 func RunApi() {
+	ctx, rdb := db_component.ConnectToRedis()
+	
 	router := gin.Default()
 
 	Route(router)
@@ -20,28 +23,17 @@ func RunApi() {
 func Route(router *gin.Engine) {
 	router.GET("/", HomePage())
 	router.GET("/product", getData)
+	router.POST("/add-product")
 }
 
 func getData(c *gin.Context) {
-	file, err := os.Open("backend/storage/Data.json")
-
-	if err != nil {
-		slog.Info("File not found")
-		c.Status(http.StatusNotFound)
+	productName := c.Query("name")
+	if productName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Product name is required"})
 		return
 	}
-
-	defer file.Close()
-
-	var data reader.Data
-
-	err = data.Parse(file)
-
-	if err != nil {
-		slog.Error("Error in parse file %v", err)
-	}
-
-	c.IndentedJSON(http.StatusOK, data)
+	
+	cacheData, err := 
 }
 
 func HomePage() gin.HandlerFunc {
@@ -49,3 +41,9 @@ func HomePage() gin.HandlerFunc {
 		c.JSON(http.StatusOK, "Home page of Image Server")
 	}
 }
+
+// func AddProduct() gin.HandlerFunc {
+// 	return func(c *gin.Context) {
+// 		c.Request.Form()
+// 	}
+// }
