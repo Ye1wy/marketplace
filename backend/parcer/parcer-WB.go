@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-
 	"log"
 	"net/http"
 	"os"
@@ -17,11 +16,6 @@ type Product struct {
 	Rating   string `json:"rating"`
 	Platform string `json:"platform"`
 	Category string `json:"category"`
-}
-
-type Filter struct {
-	Query string `json:"query"`
-	Sort  string `json:"sort"`
 }
 
 func WriteJSON(bodyText []byte, err error) {
@@ -48,10 +42,13 @@ func WriteJSON(bodyText []byte, err error) {
 	// fmt.Println("Файл успешно создан.")
 }
 
-func main() {
-
+func ParcerWB() {
+	//
+	// TODO: add dynamic query
+	//
+	//
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", "https://search.wb.ru/exactmatch/ru/common/v7/search?ab_testing=false&appType=1&curr=rub&dest=-366541&query=%D0%B4%D0%B6%D0%B8%D0%BD%D1%81%D1%8B%20%D0%B6%D0%B5%D0%BD%D1%81%D0%BA%D0%B8%D0%B5%20%D1%88%D0%B8%D1%80%D0%BE%D0%BA%D0%B8%D0%B5&resultset=filters&spp=30&suppressSpellcheck=false", nil)
+	req, err := http.NewRequest("GET", "https://search.wb.ru/exactmatch/ru/common/v7/search?ab_testing=false&appType=1&curr=rub&dest=-366541query=%D0%B4%D0%B6%D0%B8%D0%BD%D1%81%D1%8B%20%D0%B6%D0%B5%D0%BD%D1%81%D0%BA%D0%B8%D0%B5%20%D1%88%D0%B8%D1%80%D0%BE%D0%BA%D0%B8%D0%B5&resultset=filters&spp=30&suppressSpellcheck=false", nil)
 
 	if err != nil {
 		log.Fatal(err)
