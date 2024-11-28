@@ -3,13 +3,13 @@ package db_component
 import (
 	"context"
 	"log/slog"
-	"marketplace/src/reader"
+	"marketplace/src/data"
 
 	"github.com/redis/go-redis/v9"
 )
 
-func ReadData(rdb *redis.Client, ctx context.Context, key string) (*reader.Data, error) {
-	var data reader.Data
+func ReadData(rdb *redis.Client, ctx context.Context, key string) (*data.CacheData, error) {
+	var data data.CacheData
 
 	err := rdb.HGetAll(ctx, key).Scan(&data)
 

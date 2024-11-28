@@ -1,49 +1,62 @@
 package api
 
 import (
-	"log/slog"
+	"context"
+	"marketplace/src/data"
 	db_component "marketplace/src/db-component"
-	"marketplace/src/reader"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 )
 
 func RunApi() {
 	ctx, rdb := db_component.ConnectToRedis()
-	
-	router := gin.Default()
+	defer rdb.Close()
 
-	Route(router)
+	api := NewAPI(ctx, rdb)
+
+	router := gin.Default()
+	api.Route(router)
 
 	router.Run("localhost:8080")
 }
 
-func Route(router *gin.Engine) {
-	router.GET("/", HomePage())
-	router.GET("/product", getData)
-	router.POST("/add-product")
+func NewAPI(ctx context.Context, rdb *redis.Client) *API {
+	return &API{ctx: ctx, rdb: rdb}
 }
 
-func getData(c *gin.Context) {
+func (api *API) Route(router *gin.Engine) {
+	router.GET("/", api.HomePage())
+	router.GET("/product", api.GetData)
+}
+
+func (api *API) GetData(c *gin.Context) {
 	productName := c.Query("name")
 	if productName == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Product name is required"})
 		return
 	}
-	
-	cacheData, err := 
+
+	products, err := db_component.ReadData(api.rdb, api.ctx, productName)
+	if err != nil || products == nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+		return
+	}
+
+	// TODO: parsed initialize
+
+	data := data.CacheData{}
+
+	db_component.Add(api.rdb, api.ctx, productName, data)
+
+	// TODO: need to handle error from add to db function
+
+	c.IndentedJSON(http.StatusOK, products)
 }
 
-func HomePage() gin.HandlerFunc {
+func (api *API) HomePage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.JSON(http.StatusOK, "Home page of Image Server")
 	}
 }
-
-// func AddProduct() gin.HandlerFunc {
-// 	return func(c *gin.Context) {
-// 		c.Request.Form()
-// 	}
-// }
