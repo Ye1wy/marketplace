@@ -1,9 +1,12 @@
+// Package main является точкой входа в приложение маркетплейса.
 package main
 
 import (
-	"marketplace/api"
+	"marketplace/api" // Импортирует пакет api, содержащий реализацию API для маркетплейса.
 )
 
+// main является точкой входа в программу.
+// Она запускает API сервер, используя функцию RunApi из пакета api.
 func main() {
 	api.RunApi()
 }

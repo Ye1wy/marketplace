@@ -1,3 +1,4 @@
+// Package api предоставляет реализацию API для взаимодействия с продуктами на маркетплейсе.
 package api
 
 import (
@@ -10,6 +11,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// RunApi запускает API сервер, устанавливает соединение с Redis и настраивает маршруты.
 func RunApi() {
 	ctx, rdb := db_component.ConnectToRedis()
 	defer rdb.Close()
@@ -22,15 +24,23 @@ func RunApi() {
 	router.Run("localhost:8080")
 }
 
+// NewAPI создает новый экземпляр API с контекстом и клиентом Redis.
+// ctx - контекст для управления жизненным циклом запросов.
+// rdb - клиент Redis для доступа к базе данных.
 func NewAPI(ctx context.Context, rdb *redis.Client) *API {
 	return &API{ctx: ctx, rdb: rdb}
 }
 
+// Route настраивает маршруты для API.
+// router - экземпляр gin.Engine, используемый для определения маршрутов.
 func (api *API) Route(router *gin.Engine) {
 	router.GET("/", api.HomePage())
 	router.GET("/product", api.GetData)
 }
 
+// GetData обрабатывает запросы на получение данных о продукте.
+// c - контекст запроса Gin.
+// Возвращает JSON с данными о продукте или ошибку, если продукт не найден.
 func (api *API) GetData(c *gin.Context) {
 	productName := c.Query("name")
 	if productName == "" {
@@ -55,6 +65,8 @@ func (api *API) GetData(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, products)
 }
 
+// HomePage возвращает обработчик для главной страницы API.
+// Возвращает JSON с сообщением о главной странице сервера изображений.
 func (api *API) HomePage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.JSON(http.StatusOK, "Home page of Image Server")
