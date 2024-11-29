@@ -2,7 +2,7 @@ package db_component
 
 import (
 	"context"
-	"marketplace/src/data"
+	"marketplace/internal/data"
 
 	"github.com/redis/go-redis/v9"
 )

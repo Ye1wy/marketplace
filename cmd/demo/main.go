@@ -1,7 +1,7 @@
 package main
 
 import (
-	"marketplace/src/api"
+	"marketplace/api"
 )
 
 func main() {

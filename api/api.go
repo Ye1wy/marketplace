@@ -2,8 +2,8 @@ package api
 
 import (
 	"context"
-	"marketplace/src/data"
-	db_component "marketplace/src/db-component"
+	"marketplace/internal/data"
+	db_component "marketplace/internal/db-component"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
