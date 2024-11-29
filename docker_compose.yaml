@@ -1,0 +1,43 @@
+version: "3.8"
+services:
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - 6379:6379
+    networks:
+      - mp
+
+  scraper:
+    build:
+      context: .
+      dockerfile: build/scrapper/dockerfile
+    container_name: scraper
+    depends_on:
+      - redis
+    networks:
+      - mp
+
+  sort:
+    build:
+      context: .
+      dockerfile: build/sort/dockerfile
+    container_name: sort
+    depends_on:
+      - redis
+    networks:
+      - mp
+
+  server:
+    build:
+      context: .
+      dockerfile: build/server/dockerfile
+    container_name: 
+    depends_on:
+      - redis
+    networks:
+      - mp
+
+networks:
+  mp:
+    driver: bridge
