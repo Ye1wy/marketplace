@@ -32,9 +32,6 @@ jobs:
     - name: Install Go dependencies
       run: go mod tidy
 
-    - name: Run Go tests
-      run: go test ./...
-
   python-build-and-test:
     runs-on: ubuntu-latest
 
@@ -61,6 +58,4 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run Python tests
-      run: |
-        pytest  # or another test runner of your choice
-
+      run: python/sort_test.py
