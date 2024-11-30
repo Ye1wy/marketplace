@@ -2,6 +2,7 @@ import json
 from typing import Any
 import redis
 
+
 def load_json(filename: str) -> dict[str, Any]:
     with open(filename, 'r', encoding='utf-8') as file:
         data = json.load(file)
