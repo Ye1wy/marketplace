@@ -59,4 +59,4 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run Python tests
-      run: python/sort_test.py
+      run: sort_test.py
