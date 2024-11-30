@@ -1,6 +1,8 @@
 package main
 
-import "marketplace/src/api"
+import (
+	"marketplace/api"
+)
 
 func main() {
 	api.RunApi()
