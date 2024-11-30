@@ -221,6 +221,9 @@ class TestingSort(unittest.TestCase):
         }
         self.assertIsInstance(sort_price_rating(a), dict)
 
+    def test_placeholder(self):
+        self.assertTrue(True)
+
 
 if __name__ == '__main__':
     unittest.main()
