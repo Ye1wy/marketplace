@@ -31,13 +31,13 @@ func (dataScraper *Wildberries) ScrabElements() []string {
 		fmt.Println(htmlCase)
 
 		if err != nil {
-			slog.Error("Not find element in WB driver")
+			slog.Error("ScrabElements: not find element in WB driver")
 			continue
 		}
 
 		text, err := element.Text()
 		if err != nil {
-			slog.Error("Error in text extracting")
+			slog.Error("ScrabElement: error in text extracting")
 			continue
 		}
 
@@ -53,10 +53,15 @@ func (dataScraper *Wildberries) ScrabUrl() []string {
 
 	for i := 0; i < limit; i++ {
 		htmlCase := dataScraper.Config[key].ContentPrefix + strconv.Itoa(i+1) + dataScraper.Config[key].ContentSuffix
-		url, err := dataScraper.Scraper.Driver.FindElement(selenium.ByXPATH, htmlCase)
+		element, err := dataScraper.Scraper.Driver.FindElement(selenium.ByXPATH, htmlCase)
 		if err != nil {
-			slog.Error("Error in get product card url from html case in WB driver")
+			slog.Error("ScragUrl: error in find element in html case in WB driver")
 			continue
+		}
+
+		url, err := element.GetAttribute("href")
+		if err != nil {
+			slog.Error("ScrabUrl: error in get url from html case in WB driver")
 		}
 
 		fmt.Println(url)
@@ -71,9 +76,15 @@ func (dataScraper *Wildberries) ScrabImg() []string {
 
 	for i := 0; i < limit; i++ {
 		htmlCase := dataScraper.Config[key].ContentPrefix + strconv.Itoa(i+1) + dataScraper.Config[key].ContentSuffix
-		image, err := dataScraper.Scraper.Driver.FindElement(selenium.ByXPATH, htmlCase)
+		element, err := dataScraper.Scraper.Driver.FindElement(selenium.ByXPATH, htmlCase)
 		if err != nil {
-			slog.Error("Error in get image from html case in WB driver")
+			slog.Error("ScrabImg: error in finding element")
+			continue
+		}
+
+		image, err := element.GetAttribute("src")
+		if err != nil {
+			slog.Error("ScrabImg: error in get image from html case")
 			continue
 		}
 
