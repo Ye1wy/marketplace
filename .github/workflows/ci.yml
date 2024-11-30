@@ -32,7 +32,7 @@ jobs:
     - name: Install Go dependencies
       run: go mod tidy
 
-    - name: Run Go tests
+    # - name: Run Go tests
 
   python-build-and-test:
     runs-on: ubuntu-latest
