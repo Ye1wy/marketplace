@@ -6,13 +6,12 @@ import (
 	"log/slog"
 
 	"github.com/tebeka/selenium"
-	"github.com/tebeka/selenium/chrome"
 )
 
 const (
 	chromeDriverTruePath = "./internal/chromedriver/chromedriver"
 	// chromeDriverPath = "./internal/chromedriver/chromedriver-mac"
-	// port = 4444
+	port = 8080
 )
 
 type Scraper struct {
@@ -28,7 +27,7 @@ func NewScraper() *Scraper {
 	}
 
 	caps := selenium.Capabilities{}
-	caps.AddChrome(chrome.Capabilities{Args: []string{"--headless"}})
+	// caps.AddChrome(chrome.Capabilities{Args: []string{"--headless"}})
 
 	// Connect to the WebDriver instance running locally.
 	driver, err := selenium.NewRemote(caps, fmt.Sprintf("http://localhost:%d/wd/hub", port))
@@ -57,9 +56,13 @@ type ScrapingConfig struct {
 }
 
 type Marketplace interface {
-	ScrapElements(url string) []string
-	ScrapUrl(url string) []string
-	ScrapImgae(url string) []string
+	ScrapElements() []string
+	ScrapUrl() []string
+	ScrapImgae() []string
+}
+
+type Navigation interface {
+	Navigate(url string)
 }
 
 type Ozon struct {
@@ -83,13 +86,13 @@ type Wildberries struct {
 	Config  map[string]ScrapingConfig
 }
 
-func NewWildberries(scraper *Scraper) *Ozon {
-	return &Ozon{
+func NewWildberries(scraper *Scraper) *Wildberries {
+	return &Wildberries{
 		Scraper: scraper,
 		Config: map[string]ScrapingConfig{
-			"elements": {ContentPrefix: ("//*[@id=\"paginatorContent\"]/div[1]/div/div["), ContentSuffix: "]"},
-			"url":      {ContentPrefix: "//*[@id=\"paginatorContent\"]/div[1]/div/div[1]/div/a", ContentSuffix: ""},
-			"images":   {ContentPrefix: "//*[@id=\"paginatorContent\"]/div[1]/div/div[1]/div/a/div/div[1]/img", ContentSuffix: ""},
+			"elements": {ContentPrefix: "/html/body/div[1]/main/div[2]/div[2]/div[2]/div/div/div[4]/div[1]/div[1]/div/article[", ContentSuffix: "]"},
+			"url":      {ContentPrefix: "/html/body/div[1]/main/div[2]/div[2]/div[2]/div/div/div[4]/div[1]/div[1]/div/article[", ContentSuffix: "]/div/a"},
+			"images":   {ContentPrefix: "/html/body/div[1]/main/div[2]/div[2]/div[2]/div/div/div[4]/div[1]/div[1]/div/article[", ContentSuffix: "]/div/div[1]/div[2]/img[1]"},
 		},
 	}
 }
