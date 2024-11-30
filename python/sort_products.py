@@ -60,19 +60,20 @@ def main():
     ps = r.pubsub()
     ps.subscribe(chanel)
 
-    for message in ps.listen():
-        if message['type'] == 'message':
-            try:
-                data = json.loads(message['data'].decode('UTF-8'))
-                if data['sort'] == 'default':
-                    r.set(key, json.dumps(sort_price_rating(data)))
-                elif data['sort'] == 'price':
-                    r.set(key, json.dumps(sort_price(data)))
-                elif data['sort'] == 'rating':
-                    r.set(key, json.dumps(sort_rating(data)))
-                print('lol')
-            except redis.RedisError as e:
-                print(f'Could not push to redis: {e}')
+    # for message in ps.listen():
+    #     if message['type'] == 'message':
+    #         try:
+    #             data = json.loads(message['data'].decode('UTF-8'))
+    #             if data['sort'] == 'default':
+    #                 r.set(key, json.dumps(sort_price_rating(data)))
+    #             elif data['sort'] == 'price':
+    #                 r.set(key, json.dumps(sort_price(data)))
+    #             elif data['sort'] == 'rating':
+    #                 r.set(key, json.dumps(sort_rating(data)))
+    #             print('lol')
+    #         except redis.RedisError as e:
+    #             print(f'Could not push to redis: {e}')
+    print('lol_kek')
 
 
 if __name__ == '__main__':
