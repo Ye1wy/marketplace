@@ -3,10 +3,10 @@ name: Go and Python CI
 on:
   push:
     branches:
-      - main
+      - vindicao-sort
   pull_request:
     branches:
-      - main
+      - vindicao-sort
 
 jobs:
   go-build-and-test:
