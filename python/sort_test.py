@@ -222,10 +222,10 @@ class TestingSort(unittest.TestCase):
         self.assertIsInstance(sort_price_rating(a), dict)
 
     def test_placeholder(self):
-        self.assertTrue(True)
+        self.assertTrue(False)
 
     def test_placeholder2(self):
-        self.assertTrue(False)
+        self.assertTrue(True)
 
 
 if __name__ == '__main__':
