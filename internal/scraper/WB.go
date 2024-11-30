@@ -2,84 +2,83 @@ package scraper
 
 import (
 	"fmt"
-	"io"
-	"log"
-	"net/http"
-	"os"
+	"log/slog"
+	"strconv"
+	"time"
+
+	"github.com/tebeka/selenium"
 )
 
-type Product struct {
-	Id       uint   `json:"id"`
-	Name     string `json:"name"`
-	Price    uint   `json:"price"`
-	UrlLink  string `json:"link"`
-	Rating   string `json:"rating"`
-	Platform string `json:"platform"`
-	Category string `json:"category"`
+const (
+	limit = 10
+)
+
+func (dataScraper *Wildberries) Navigate(url string) {
+	if err := dataScraper.Scraper.Driver.Get(url); err != nil {
+		slog.Error("Unviable url in WB driver navigate component")
+	}
 }
 
-func WriteJSON(bodyText []byte, err error) {
-	if err != nil {
-		fmt.Println("Ошибка при получении данных:", err)
-		return
+func (dataScraper *Wildberries) ScrabElements() []string {
+	key := "elements"
+	collectedData := make([]string, limit)
+
+	time.Sleep(time.Second * 6)
+
+	for i := 0; i < limit; i++ {
+		htmlCase := dataScraper.Config[key].ContentPrefix + strconv.Itoa(i+1) + dataScraper.Config[key].ContentSuffix
+		element, err := dataScraper.Scraper.Driver.FindElement(selenium.ByXPATH, htmlCase)
+		fmt.Println(htmlCase)
+
+		if err != nil {
+			slog.Error("Not find element in WB driver")
+			continue
+		}
+
+		text, err := element.Text()
+		if err != nil {
+			slog.Error("Error in text extracting")
+			continue
+		}
+
+		fmt.Println(text)
 	}
 
-	// Создаем файл
-	file, err := os.Create("data.json")
-	if err != nil {
-		fmt.Println("Ошибка создания файла:", err)
-		return
-	}
-	defer file.Close()
-
-	// Записываем данные в файл
-	_, err = file.Write(bodyText)
-	if err != nil {
-		fmt.Println("Ошибка записи в файл:", err)
-		return
-	}
-
-	// fmt.Println("Файл успешно создан.")
+	return collectedData
 }
 
-func ParcerWB() {
-	//
-	// TODO: add dynamic query
-	//
-	//
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", "https://search.wb.ru/exactmatch/ru/common/v7/search?ab_testing=false&appType=1&curr=rub&dest=-366541query=%D0%B4%D0%B6%D0%B8%D0%BD%D1%81%D1%8B%20%D0%B6%D0%B5%D0%BD%D1%81%D0%BA%D0%B8%D0%B5%20%D1%88%D0%B8%D1%80%D0%BE%D0%BA%D0%B8%D0%B5&resultset=filters&spp=30&suppressSpellcheck=false", nil)
+func (dataScraper *Wildberries) ScrabUrl() []string {
+	key := "url"
+	collectedData := make([]string, limit)
 
-	if err != nil {
-		log.Fatal(err)
+	for i := 0; i < limit; i++ {
+		htmlCase := dataScraper.Config[key].ContentPrefix + strconv.Itoa(i+1) + dataScraper.Config[key].ContentSuffix
+		url, err := dataScraper.Scraper.Driver.FindElement(selenium.ByXPATH, htmlCase)
+		if err != nil {
+			slog.Error("Error in get product card url from html case in WB driver")
+			continue
+		}
+
+		fmt.Println(url)
 	}
 
-	req.Header.Set("accept", "*/*")
-	req.Header.Set("accept-language", "en-US,en;q=0.9,ru;q=0.8")
-	req.Header.Set("origin", "https://www.wildberries.ru")
-	req.Header.Set("priority", "u=1, i")
-	req.Header.Set("referer", "https://www.wildberries.ru/catalog/0/search.aspx?search=%D0%B4%D0%B6%D0%B8%D0%BD%D1%81%D1%8B%20%D0%B6%D0%B5%D0%BD%D1%81%D0%BA%D0%B8%D0%B5%20%D1%88%D0%B8%D1%80%D0%BE%D0%BA%D0%B8%D0%B5")
-	req.Header.Set("sec-ch-ua", `"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"`)
-	req.Header.Set("sec-ch-ua-mobile", "?0")
-	req.Header.Set("sec-ch-ua-platform", `"macOS"`)
-	req.Header.Set("sec-fetch-dest", "empty")
-	req.Header.Set("sec-fetch-mode", "cors")
-	req.Header.Set("sec-fetch-site", "cross-site")
-	req.Header.Set("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
-	req.Header.Set("x-captcha-id", "Catalog 1|1|1733812057|AA==|783f1311c88144ff9f06ff6a1f7d70c6|mLrGEJvghWJUJXC4tMl3BiCX6BPRRiI2wICV56GXcO2")
-	req.Header.Set("x-queryid", "qid783729000173260245520241126062850")
+	return collectedData
+}
 
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatal(err)
+func (dataScraper *Wildberries) ScrabImg() []string {
+	key := "image"
+	collectedData := make([]string, limit)
+
+	for i := 0; i < limit; i++ {
+		htmlCase := dataScraper.Config[key].ContentPrefix + strconv.Itoa(i+1) + dataScraper.Config[key].ContentSuffix
+		image, err := dataScraper.Scraper.Driver.FindElement(selenium.ByXPATH, htmlCase)
+		if err != nil {
+			slog.Error("Error in get image from html case in WB driver")
+			continue
+		}
+
+		fmt.Println(image)
 	}
 
-	defer resp.Body.Close()
-	bodyText, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	WriteJSON(bodyText, err)
-
+	return collectedData
 }
