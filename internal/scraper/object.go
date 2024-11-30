@@ -26,7 +26,8 @@ func NewScraper() *Scraper {
 		return nil
 	}
 
-	caps := selenium.Capabilities{}
+	// caps := selenium.Capabilities{}
+	caps := selenium.Capabilities{"browserName": "chrome", "goog:chromeOptions": map[string]interface{}{"args": []string{"--headless", "--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"}}}
 	// caps.AddChrome(chrome.Capabilities{Args: []string{"--headless"}})
 
 	// Connect to the WebDriver instance running locally.
@@ -53,16 +54,6 @@ func (scraper *Scraper) Quit() {
 type ScrapingConfig struct {
 	ContentPrefix string
 	ContentSuffix string
-}
-
-type Marketplace interface {
-	ScrapElements() []string
-	ScrapUrl() []string
-	ScrapImgae() []string
-}
-
-type Navigation interface {
-	Navigate(url string)
 }
 
 type Ozon struct {
@@ -95,4 +86,9 @@ func NewWildberries(scraper *Scraper) *Wildberries {
 			"images":   {ContentPrefix: "/html/body/div[1]/main/div[2]/div[2]/div[2]/div/div/div[4]/div[1]/div[1]/div/article[", ContentSuffix: "]/div/div[1]/div[2]/img[1]"},
 		},
 	}
+}
+
+type ScraperInterface interface {
+	GetConfig(key string) ScrapingConfig
+	GetDriver() selenium.WebDriver
 }

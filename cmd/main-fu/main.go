@@ -3,8 +3,12 @@ package main
 import "marketplace/internal/scraper"
 
 func main() {
-	scraber := scraper.NewScraber()
+	scrap := scraper.NewScraper()
 
-	scraber.GetOzon("https://www.ozon.ru/search/?text=носки&from_global=true")
-	// scraber.GetOzon("https://www.ozon.ru/search/?text=bottel&from_global=true")
+	wildberriesScraper := scraper.NewWildberries(scrap)
+	url := "https://www.wildberries.ru/catalog/0/search.aspx?search=bottle"
+	scraper.Navigate(wildberriesScraper, url)
+	scraper.ScrabElements(wildberriesScraper)
+	scraper.ScrabUrl(wildberriesScraper)
+	scraper.ScrabImg(wildberriesScraper)
 }
