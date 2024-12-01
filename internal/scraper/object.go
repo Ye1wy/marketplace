@@ -11,7 +11,7 @@ import (
 const (
 	chromeDriverTruePath = "./internal/chromedriver/chromedriver"
 	// chromeDriverPath = "./internal/chromedriver/chromedriver-mac"
-	port = 8080
+	port = 4444
 )
 
 type Scraper struct {
@@ -26,8 +26,8 @@ func NewScraper() *Scraper {
 		return nil
 	}
 
-	// caps := selenium.Capabilities{}
-	caps := selenium.Capabilities{"browserName": "chrome", "goog:chromeOptions": map[string]interface{}{"args": []string{"--headless", "--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"}}}
+	caps := selenium.Capabilities{}
+	// caps := selenium.Capabilities{"browserName": "chrome", "goog:chromeOptions": map[string]interface{}{"args": []string{"--headless", "--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"}}}
 	// caps.AddChrome(chrome.Capabilities{Args: []string{"--headless"}})
 
 	// Connect to the WebDriver instance running locally.
@@ -66,8 +66,8 @@ func NewOzon(scraper *Scraper) *Ozon {
 		Scraper: scraper,
 		Config: map[string]ScrapingConfig{
 			"elements": {ContentPrefix: "//*[@id=\"paginatorContent\"]/div[1]/div/div[", ContentSuffix: "]"},
-			"url":      {ContentPrefix: "//*[@id=\"paginatorContent\"]/div[1]/div/div[1]/div/a", ContentSuffix: ""},
-			"images":   {ContentPrefix: "//*[@id=\"paginatorContent\"]/div[1]/div/div[1]/div/a/div/div[1]/img", ContentSuffix: ""},
+			"url":      {ContentPrefix: "//*[@id=\"paginatorContent\"]/div[1]/div/div[", ContentSuffix: "]/div/a"},
+			"images":   {ContentPrefix: "//*[@id=\"paginatorContent\"]/div[1]/div/div[", ContentSuffix: "]/div/a/div/div[1]/img"},
 		},
 	}
 }

@@ -1,7 +1,6 @@
 package scraper
 
 import (
-	"fmt"
 	"log/slog"
 	"marketplace/internal/data"
 	"regexp"
@@ -20,19 +19,24 @@ func Navigate(dataScraper ScraperInterface, url string) {
 		slog.Error("Unviable url in WB driver navigate component")
 	}
 
-	time.Sleep(time.Second * 5)
 }
 
-func ScrabElements(dataScraper ScraperInterface) []string {
+func ScrabElements(dataScraper ScraperInterface, cacheData *data.CacheData) {
 	key := "elements"
-	collectedData := make([]string, limit)
+	if dataScraper.GetConfig(key).ContentPrefix == "//*[@id=\"paginatorContent\"]/div[1]/div/div[" {
+		time.Sleep(time.Second * 2)
+		dataScraper.GetDriver().Refresh()
+
+	} else {
+		time.Sleep(time.Second * 5)
+	}
 
 	for i := 0; i < limit; i++ {
 		htmlCase := dataScraper.GetConfig(key).ContentPrefix + strconv.Itoa(i+1) + dataScraper.GetConfig(key).ContentSuffix
 		element, err := dataScraper.GetDriver().FindElement(selenium.ByXPATH, htmlCase)
 
 		if err != nil {
-			slog.Error("ScrabElements: not find element in WB driver")
+			slog.Error("ScrabElements: not find element in driver")
 			continue
 		}
 
@@ -42,15 +46,18 @@ func ScrabElements(dataScraper ScraperInterface) []string {
 			continue
 		}
 
-		fmt.Println(text)
+		if i >= len(cacheData.Products) {
+			cacheData.Products = append(cacheData.Products, data.Product{})
+		}
+
+		// // Наполняем поля через регулярки
+		cacheData.Products[i].Name = text
 	}
 
-	return collectedData
 }
 
-func ScrabUrl(dataScraper ScraperInterface) []string {
+func ScrabUrl(dataScraper ScraperInterface, cacheData *data.CacheData) {
 	key := "url"
-	collectedData := make([]string, limit)
 
 	for i := 0; i < limit; i++ {
 		htmlCase := dataScraper.GetConfig(key).ContentPrefix + strconv.Itoa(i+1) + dataScraper.GetConfig(key).ContentSuffix
@@ -65,15 +72,14 @@ func ScrabUrl(dataScraper ScraperInterface) []string {
 			slog.Error("ScrabUrl: error in get url from html case in WB driver")
 		}
 
-		fmt.Println(url)
+		if i < len(cacheData.Products) {
+			cacheData.Products[i].UrlLink = url
+		}
 	}
-
-	return collectedData
 }
 
-func ScrabImg(dataScraper ScraperInterface) []string {
+func ScrabImg(dataScraper ScraperInterface, cacheData *data.CacheData) {
 	key := "images"
-	collectedData := make([]string, limit)
 
 	for i := 0; i < limit; i++ {
 		htmlCase := dataScraper.GetConfig(key).ContentPrefix + strconv.Itoa(i+1) + dataScraper.GetConfig(key).ContentSuffix
@@ -89,10 +95,11 @@ func ScrabImg(dataScraper ScraperInterface) []string {
 			continue
 		}
 
-		fmt.Println(image)
+		if i < len(cacheData.Products) {
+			cacheData.Products[i].Image = image
+		}
 	}
 
-	return collectedData
 }
 
 func WriteElementToJson(text string, data data.Product) data.Product {

@@ -3,7 +3,9 @@ package api
 import (
 	"context"
 	"log/slog"
+	"marketplace/internal/data"
 	db_component "marketplace/internal/db-component"
+	"marketplace/internal/scraper"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -20,7 +22,9 @@ func NewAPI(ctx context.Context, rdb *redis.Client) *API {
 }
 
 func (api *API) Run() {
-	router := gin.Default()
+	router := gin.New()
+	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
 	api.Route(router)
 
 	router.Run("localhost:8080")
@@ -40,75 +44,62 @@ func homePage() gin.HandlerFunc {
 func productHandler(api *API) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		productName := c.Query("name")
+		slog.Info("Received POST /product request",
+			"productName", productName,
+			"queryParams", c.Request.URL.Query())
+
 		if productName == "" {
-			slog.Info("No product name in request")
+			slog.Warn("No product name in request")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Product name is required"})
 			return
 		}
 
-		products, err := db_component.ReadData(api.rdb, api.ctx, productName)
-		if err != nil || products == nil {
-			if err := api.rdb.Publish(api.ctx, "api_to_scraper", productName).Err(); err != nil {
-				slog.Info("Failde to publish message")
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to publish message"})
-				return
-			}
+		// products, err := db_component.ReadData(api.rdb, api.ctx, productName)
 
-			reply := api.rdb.Subscribe(api.ctx, "sort_to_api")
-			defer reply.Close()
+		// if err != nil {
+		slog.Info("Product not found in cache; publishing to scraper",
+			"productName", productName)
 
-			msg := <-reply.Channel()
-
-			// cacheData, err := waitForMessage(api.ctx, reply)
-			cacheData, err := db_component.ConvertToJASON(msg)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process data"})
-				return
-			}
-
-			db_component.Add(api.rdb, api.ctx, productName, cacheData)
-			c.JSON(http.StatusOK, cacheData)
-			return
+		cacheWB := data.CacheData{
+			Products: make([]data.Product, 10),
+			Request:  productName,
+			Sort:     "default",
 		}
 
-		c.IndentedJSON(http.StatusOK, products)
+		scrap := scraper.NewScraper()
+		wildberriesScraper := scraper.NewWildberries(scrap)
+		url := "https://www.wildberries.ru/catalog/0/search.aspx?search=" + productName
+		scraper.Navigate(wildberriesScraper, url)
+		scraper.ScrabElements(wildberriesScraper, &cacheWB)
+		scraper.ScrabUrl(wildberriesScraper, &cacheWB)
+		scraper.ScrabImg(wildberriesScraper, &cacheWB)
+
+		cacheOzon := data.CacheData{
+			Products: make([]data.Product, 10),
+			Request:  productName,
+			Sort:     "default",
+		}
+
+		scrap.Quit()
+
+		scrap = scraper.NewScraper()
+
+		ozonScraper := scraper.NewOzon(scrap)
+		url = "https://www.ozon.ru/search/?text=" + productName + "&from_global=true"
+		scraper.Navigate(ozonScraper, url)
+		scraper.ScrabElements(ozonScraper, &cacheOzon)
+		scraper.ScrabUrl(ozonScraper, &cacheOzon)
+		scraper.ScrabImg(ozonScraper, &cacheOzon)
+		scrap.Quit()
+
+		products := data.MergeCacheData(cacheWB, cacheOzon)
+		db_component.Add(api.rdb, api.ctx, productName, products)
+		c.JSON(http.StatusOK, products)
 	}
+
+	// slog.Info("Returning cached product data",
+	// 	"productName", productName,
+	// 	"data", products)
+	// c.IndentedJSON(http.StatusOK, products)
+	// // }
 }
-
-// func waitForMessage(ctx context.Context, pubsub *redis.PubSub) (*data.CacheData, error) {
-// 	// Создаем канал для сообщений
-// 	messageChan := pubsub.Channel()
-
-// 	for {
-// 		select {
-// 		case msg := <-messageChan: // Ждем новое сообщение
-// 			if msg == nil {
-// 				continue // Если канал пустой, пропускаем
-// 			}
-
-// 			// // Конвертируем сообщение в структуру CacheData
-// 			// cacheData, err := db_component.ConvertToJASON(msg)
-// 			// if err != nil {
-// 			// 	return nil, err
-// 			// }
-// 			// return &cacheData, nil
-
-// 			// case <-ctx.Done(): // Завершаем работу, если контекст отменен
-// 			// 	return nil, ctx.Err()
-// 		}
-// 	}
-// }
-
-// func sortRatingHandler(api *API) gin.HandlerFunc {
-// 	return func(ctx *gin.Context) {
-// 		productName := ctx.Query("name")
-// 		if productName == "" {
-// 			slog.Info("No product name in request")
-// 			ctx.JSON(http.StatusOK, gin.H{"error": "Product name is required"})
-// 			return
-// 		}
-
-// 		products, _ := db_component.ReadData(api.rdb, api.ctx, productName)
-
-// 	}
-// }
