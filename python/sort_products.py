@@ -9,7 +9,7 @@ def load_json(filename: str) -> dict[str, Any]:
     return data
 
 
-def save_json(saved: list, filename: str):
+def save_json(saved: dict, filename: str):
     with open(filename, 'w', encoding='UTF-8') as file:
         json.dump(saved, file, indent=4, ensure_ascii=False)
 
@@ -29,50 +29,54 @@ def sort_price_rating(products: dict[str, Any]) -> dict[str, Any]:
     min_price: float = min(prices)
     max_price: float = max(prices)
 
-    sorted_products = {'sort': products['sort'], 'products': sorted(products_list,
-                                                                    key=lambda p: (0.4 * normalize_rating(p['rating']))
-                                                                                  - (0.6 * normalize_price(p['price'],
-                                                                                                           min_price,
-                                                                                                           max_price)),
-                                                                    reverse=True)}
+    sorted_products = {'request': products['request'], 'sort': products['sort'],
+                       'products': sorted(products_list,
+                                          key=lambda p: (0.4 * normalize_rating(p['rating']))
+                                                        - (0.6 * normalize_price(p['price'],
+                                                                                 min_price,
+                                                                                 max_price)),
+                                          reverse=True)}
     return sorted_products
 
 
 def sort_price(products: dict[str, Any]) -> dict[str, Any]:
-    sorted_products = {'sort': products['sort'], 'products': sorted(products['products'],
-                                                                    key=lambda p: p['price'],
-                                                                    reverse=False)}
+    sorted_products = {'request': products['request'], 'sort': products['sort'],
+                       'products': sorted(products['products'],
+                                          key=lambda p: p['price'],
+                                          reverse=False)}
     return sorted_products
 
 
 def sort_rating(products: dict[str, Any]) -> dict[str, Any]:
-    sorted_products = {'sort': products['sort'], 'products': sorted(products['products'],
-                                                                    key=lambda p: p['rating'],
-                                                                    reverse=True)}
+    sorted_products = {'request': products['request'], 'sort': products['sort'],
+                       'products': sorted(products['products'],
+                                          key=lambda p: p['rating'],
+                                          reverse=True)}
     return sorted_products
 
 
 def main():
     r = redis.Redis(host='localhost', port=6379, db=0)
-    key = 'mp_data'
-    chanel = 'practice_chanel'
+
+    chanel_to_listen = 'scraper_to_sort'
+    chanel_to_publish = 'sort_to_API'
 
     ps = r.pubsub()
-    ps.subscribe(chanel)
+    ps.subscribe(chanel_to_listen)
 
-    # for message in ps.listen():
-    #     if message['type'] == 'message':
-    #         try:
-    #             data = json.loads(message['data'].decode('UTF-8'))
-    #             if data['sort'] == 'default':
-    #                 r.set(key, json.dumps(sort_price_rating(data)))
-    #             elif data['sort'] == 'price':
-    #                 r.set(key, json.dumps(sort_price(data)))
-    #             elif data['sort'] == 'rating':
-    #                 r.set(key, json.dumps(sort_rating(data)))
-    #             print('lol')
-    #         except redis.RedisError as e:
-    #             print(f'Could not push to redis: {e}')
+    for message in ps.listen():
+        if message['type'] == 'message':
+            try:
+                data = json.loads(message['data'].decode('UTF-8'))
+                if data['sort'] == 'default':
+                    r.publish(chanel_to_publish, json.dumps(sort_price_rating(data)))
+                elif data['sort'] == 'price':
+                    r.publish(chanel_to_publish, json.dumps(sort_price_rating(data)))
+                elif data['sort'] == 'rating':
+                    r.publish(chanel_to_publish, json.dumps(sort_price_rating(data)))
+                print('lol')
+            except redis.RedisError as e:
+                print(f'Could not push to redis: {e}')
     print('lol_kek')
 
 
