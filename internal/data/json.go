@@ -2,6 +2,8 @@ package data
 
 type CacheData struct {
 	Products []Product `json:"products"`
+	Request  string    `json:"request"`
+	Sort     string    `json:"sort"`
 }
 
 type Product struct {
