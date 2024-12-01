@@ -7,6 +7,7 @@ import (
 	db_component "marketplace/internal/db-component"
 	"marketplace/internal/scraper"
 	"net/http"
+	"text/template"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -15,6 +16,10 @@ import (
 type API struct {
 	ctx context.Context
 	rdb *redis.Client
+}
+
+type PageData struct {
+	Message string
 }
 
 func NewAPI(ctx context.Context, rdb *redis.Client) *API {
@@ -31,13 +36,17 @@ func (api *API) Run() {
 }
 
 func (api *API) Route(router *gin.Engine) {
-	router.GET("/", homePage())
-	router.POST("/product", productHandler(api))
+	router.GET("/", homePage(router))
+	router.GET("/product", productHandler(api))
 }
 
-func homePage() gin.HandlerFunc {
+func homePage(router *gin.Engine) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.JSON(http.StatusOK, "Home page of Image Server")
+		router.LoadHTMLFiles("./index.html")
+		c.HTML(http.StatusOK, "index.html", gin.H{
+			"message": "Hello, World!",
+		})
+		router.Static("./css/styles.css", "./index.html")
 	}
 }
 
@@ -89,11 +98,16 @@ func productHandler(api *API) gin.HandlerFunc {
 		scraper.Navigate(ozonScraper, url)
 		scraper.ScrabElements(ozonScraper, &cacheOzon)
 		scraper.ScrabUrl(ozonScraper, &cacheOzon)
-		scraper.ScrabImg(ozonScraper, &cacheOzon)
-		scrap.Quit()
 
 		products := data.MergeCacheData(cacheWB, cacheOzon)
 		db_component.Add(api.rdb, api.ctx, productName, products)
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			tmpl := template.Must(template.ParseFiles("static/index.html"))
+			data := PageData{
+				Message: "Hello, this is dynamic data!",
+			}
+			tmpl.Execute(w, data)
+		})
 		c.JSON(http.StatusOK, products)
 	}
 
