@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"marketplace/internal/data"
+	"log/slog"
 	db_component "marketplace/internal/db-component"
 	"net/http"
 
@@ -41,24 +41,74 @@ func productHandler(api *API) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		productName := c.Query("name")
 		if productName == "" {
+			slog.Info("No product name in request")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Product name is required"})
 			return
 		}
 
 		products, err := db_component.ReadData(api.rdb, api.ctx, productName)
 		if err != nil || products == nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+			if err := api.rdb.Publish(api.ctx, "api_to_scraper", productName).Err(); err != nil {
+				slog.Info("Failde to publish message")
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to publish message"})
+				return
+			}
+
+			reply := api.rdb.Subscribe(api.ctx, "sort_to_api")
+			defer reply.Close()
+
+			msg := <-reply.Channel()
+
+			// cacheData, err := waitForMessage(api.ctx, reply)
+			cacheData, err := db_component.ConvertToJASON(msg)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process data"})
+				return
+			}
+
+			db_component.Add(api.rdb, api.ctx, productName, cacheData)
+			c.JSON(http.StatusOK, cacheData)
 			return
 		}
-
-		// TODO: parsed initialize
-
-		data := data.CacheData{}
-
-		db_component.Add(api.rdb, api.ctx, productName, data)
-
-		// TODO: need to handle error from add to db function
 
 		c.IndentedJSON(http.StatusOK, products)
 	}
 }
+
+// func waitForMessage(ctx context.Context, pubsub *redis.PubSub) (*data.CacheData, error) {
+// 	// Создаем канал для сообщений
+// 	messageChan := pubsub.Channel()
+
+// 	for {
+// 		select {
+// 		case msg := <-messageChan: // Ждем новое сообщение
+// 			if msg == nil {
+// 				continue // Если канал пустой, пропускаем
+// 			}
+
+// 			// // Конвертируем сообщение в структуру CacheData
+// 			// cacheData, err := db_component.ConvertToJASON(msg)
+// 			// if err != nil {
+// 			// 	return nil, err
+// 			// }
+// 			// return &cacheData, nil
+
+// 			// case <-ctx.Done(): // Завершаем работу, если контекст отменен
+// 			// 	return nil, ctx.Err()
+// 		}
+// 	}
+// }
+
+// func sortRatingHandler(api *API) gin.HandlerFunc {
+// 	return func(ctx *gin.Context) {
+// 		productName := ctx.Query("name")
+// 		if productName == "" {
+// 			slog.Info("No product name in request")
+// 			ctx.JSON(http.StatusOK, gin.H{"error": "Product name is required"})
+// 			return
+// 		}
+
+// 		products, _ := db_component.ReadData(api.rdb, api.ctx, productName)
+
+// 	}
+// }
